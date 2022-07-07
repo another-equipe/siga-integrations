@@ -55,9 +55,9 @@ class CandidateController {
 
     public function get_candidate_by_phone($phone){
         global $wpdb;
-
+        
         $sanitized_phone = str_replace(['(', ')', '-', ' ', '.', '/'], '', $phone);
-
+        
         $sql = "
         SELECT 
             ID, 
@@ -80,7 +80,7 @@ class CandidateController {
 
         $post = get_post_meta($candidate->ID);
 
-        $candidate_post = [
+        $candidate_post = ($candidate == null) ? null : [
             "candidate_nome"        => $candidate->post_title,
             "candidate_email"       => $post["c_email"][0],
             "candidate_vaga"        => $post["c_vaga"][0],

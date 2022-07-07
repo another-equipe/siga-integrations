@@ -84,7 +84,10 @@ class SIGAAPI{
                 $phone = $request["phone"];
                 $candidate = $candidateController->get_candidate_by_phone($phone);
                 
-                return ["status" => "success", "candidate" => $candidate];
+                return [
+                    "status" => ($candidate == null) ? "not-found" : "success",
+                    "candidate" => $candidate
+                ];
             }
         } catch (Exception $e) {
             return ["status" => "error", "error" => $e];
