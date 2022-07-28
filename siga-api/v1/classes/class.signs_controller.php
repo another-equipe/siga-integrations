@@ -1,8 +1,7 @@
 <?php
 
+include_once __DIR__."/../../constants.php";
 include_once __DIR__."./../../utils/sanitize_metas.php";
-
-define("CANDIDATES_SIGNS_SLUG", "savesign_candidatos");
 
 class SignsController {
     public function get_candidates_signs($pagination = ["offset" => 0, "limit" => 100], FilterController $filter_controller){

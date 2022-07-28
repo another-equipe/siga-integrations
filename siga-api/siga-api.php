@@ -1,8 +1,8 @@
 <?php
 
 /**
- * Plugin Name: SIGA API
- * Version: 2.1.0
+ * Plugin Name: SIGA Integrations
+ * Version: 2.1.2
  * Plugin URI: 
  * Description: API para integrações com o SIGA
  * Author: Another Equipe
@@ -10,52 +10,14 @@
  *
  * @package WordPress
  * @author Another Equipe
- * @since 2.1.0
+ * @since 2.1.2
  */
 
 include_once __DIR__."/v1/core.php";
 include_once __DIR__."/scheduled_events.php";
+include_once __DIR__."/constants.php";
 include_once __DIR__."/v1/classes/class.auth_controller.php";
 include_once __DIR__."/v1/classes/class.router.php";
-
-DEFINE("SIGA_V1_ROUTES", [
-    "get:candidates" => [
-        "route" => "/candidates",
-        "method" => "GET"
-    ],
-    "get:candidate" => [
-        "route" => "/candidates/(?P<phone>\d+)",
-        "method" => "GET"
-    ],
-    "post:candidate" => [
-        "route" => "/candidate",
-        "method" => "POST"
-    ],
-    "get:candidate_signs" => [
-        "route" => "/candidates/signs",
-        "method" => "GET"
-    ],
-    "get:candidate_sign" => [
-        "route" => "/candidates/signs/(?P<id>\d+)",
-        "method" => "GET"
-    ],
-    "post:create_academia_user" => [
-        "route" => "/academia/user/(?P<id>\d+)",
-        "method" => "POST"
-    ],
-    "post:course_completed" => [
-        "route" => "/academia/user/course",
-        "method" => "POST"
-    ],
-    "post:certificate_awarded" => [
-        "route" => "/academia/user/certificate",
-        "method" => "POST"
-    ],
-    "get:team" => [
-        "route" => "/team/(?P<id>\d+)",
-        "method" => "GET"
-    ]
-]);
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -199,6 +161,23 @@ function register_sigav1_routes(){
             return ["status" => "fatal-error", "error" => (string)$e];
         }
     }, SIGA_V1_ROUTES["post:candidate"]["method"]);
+
+    $SIGA_API->add_route(SIGA_V1_ROUTES["post:bitrix"]["route"], function($request){
+        $auth_controller = new AuthController();
+        $router = new Router();
+        $have_auth = $auth_controller->authenticate($request["key"]);
+
+        try {
+            if ($have_auth){
+                return rest_ensure_response($router->bitrix_action($request));
+            }
+            return ["status" => "error", "error" => "unauthorized"];
+        } catch (Exception $e){
+            return ["status" => "error", "error" => $e];
+        } catch (Throwable $e){
+            return ["status" => "fatal-error", "error" => (string)$e];
+        }
+    }, SIGA_V1_ROUTES["post:bitrix"]["method"]);
 
     $SIGA_API->add_route(SIGA_V1_ROUTES["get:team"]["route"], function($request){
         $auth_controller = new AuthController();

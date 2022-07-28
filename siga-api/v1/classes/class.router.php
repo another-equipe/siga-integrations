@@ -1,17 +1,15 @@
 <?php
 
+include_once __DIR__."/../../constants.php";
+include_once __DIR__."/class.historic.php";
 include_once __DIR__."/class.candidate_controller.php";
 include_once __DIR__."/class.signs_controller.php";
 include_once __DIR__."/class.pagination_controller.php";
 include_once __DIR__."/class.filter_controller.php";
 include_once __DIR__."/class.academia_controller.php";
 include_once __DIR__."/class.clicksign_controller.php";
+include_once __DIR__."/class.bitrix.php";
 
-
-define("ACADEMIA_DOMAIN", "https://api-lw15.learnworlds.com");
-define("ACADEMIA_ACCESS_TOKEN", "TZXkqDX9nxrivB6pNFf3RJNIjHyncLcL3ch1IPXA"); //valid until 12/07/2023
-define("ACADEMIA_CLIENT_ID", "62cd81001c440f668b022ed2");
-define("ACADEMIA_DEFAULT_USER_PASS", "savecash@2022");
 
 class Router{
     public function get_candidates($request){
@@ -166,9 +164,59 @@ class Router{
                 $candidate_controller = new CandidateController();
                 return $candidate_controller->distract_team(intval($data["id"]));
             },
+            "promote-candidate" => function($data){
+                $candidate_controller = new CandidateController();
+                return $candidate_controller->promote_candidate(
+                    intval($data["id"]),
+                    intval($data["new_recruiter_id"]),
+                    $data["hierarquie"],
+                    intval($data["to_assume"])
+                );
+            },
             "send-distract" => function($data){
                 $clicksign = new ClickSign();
-                return $clicksign->schedule_send_distract(intval($data["id"]));
+                $Historic = new Historic();
+
+                $clicksign->schedule_send_distract(intval($data["id"]));
+                
+                $name = get_post(intval($data["id"]))->post_title;
+                $Historic->new([
+                    "title" => "[send distract scheduled] - ".$name,
+                    "action" => "send distract scheduled",
+                    "who_received" => $name
+                ]);
+
+                return intval($data["id"]);
+            },
+            "send-spc-contract" => function($data){
+                $clicksign = new ClickSign();
+                $Historic = new Historic();
+
+                $clicksign->schedule_send_SPC_contract(intval($data["id"]));
+
+                $name = get_post(intval($data["id"]))->post_title;
+                $Historic->new([
+                    "title" => "[send SCP contract scheduled] - ".$name,
+                    "action" => "send SCP contract scheduled",
+                    "who_received" => $name
+                ]);
+
+                return intval($data["id"]);
+            },
+            "send-attachment-contract" => function($data){
+                $clicksign = new ClickSign();
+                $Historic = new Historic();
+
+                $clicksign->schedule_send_attachment_contract(intval($data["id"]));
+
+                $name = get_post(intval($data["id"]))->post_title;
+                $Historic->new([
+                    "title" => "[send attachment contract scheduled] - ".$name,
+                    "action" => "send attachment contract scheduled",
+                    "who_received" => $name
+                ]);
+
+                return intval($data["id"]);
             }
         ];
         
@@ -179,8 +227,37 @@ class Router{
         try {
             $data = $actions[$action]($data);
             return ["status" => "success", "date" => date_timestamp_get(date_create()), "data" => $data];
-        } catch (Exception $e) {
-            return ["status" => "failed", "data" => [], "error" => $e];
+        } catch (\Exception $f) {
+            return ["status" => "failed", "data" => [], "error" => $f->getMessage()];
+        } catch (\Throwable $th) {
+            return ["status" => "failed", "data" => [], "error" => (string)$th];
+        }
+    }
+
+    public function bitrix_action($request){
+        $data = json_decode($request->get_body(), true);
+        $action = (string)$data["trigger"];
+
+        $actions = [
+            "sync-bitrix" => function($data){
+                $bitrix = new Bitrix(true);
+                $bitrix->root_department = intval($data["root_department"]);
+                
+                return $bitrix->sync_candidate(intval($data["id"]), $data["id_type"] ?? "siga");
+            },
+        ];
+        
+        if (is_null($actions[$action])){
+            return ["status" => "failed", "error" => "invalid trigger", "trigger_list" => array_keys($actions)];
+        }
+
+        try {
+            $data = $actions[$action]($data);
+            return ["status" => "success", "date" => date_timestamp_get(date_create()), "data" => $data];
+        } catch (\Exception $f) {
+            return ["status" => "failed", "data" => [], "error" => $f->getMessage()];
+        } catch (\Throwable $th) {
+            return ["status" => "failed", "data" => [], "error" => (string)$th];
         }
     }
 }

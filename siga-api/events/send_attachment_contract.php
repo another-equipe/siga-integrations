@@ -4,10 +4,10 @@ include_once __DIR__."/../constants.php";
 include_once __DIR__."/../v1/classes/class.historic.php";
 include_once __DIR__."/queue_handler.php";
 
-function send_distract(){
+function send_attachment_contract(){
     global $wpdb;
 
-    $result = get_queue(SCHEDULE_SEND_DISTRACT_SLUG);
+    $result = get_queue(SCHEDULE_SEND_ATTACHMENT_CONTRACT_SLUG);
     
     $id = sizeof($result) > 0 ? $result[0]["id"] : null;
     $post = get_post(intval($id));
@@ -17,10 +17,10 @@ function send_distract(){
     
     $Historic = new Historic();
 
-    remove_from_queue(intval($id), SCHEDULE_SEND_DISTRACT_SLUG);
+    remove_from_queue(intval($id), SCHEDULE_SEND_ATTACHMENT_CONTRACT_SLUG);
 
     try {
-        $url = $_SERVER['REQUEST_SCHEME']."://".$_SERVER['HTTP_HOST']."/adapters/adapter_send_distract.php";
+        $url = $_SERVER['REQUEST_SCHEME']."://".$_SERVER['HTTP_HOST']."/adapters/adapter_send_attachment_contract.php";
 
         $curl = curl_init($url);
         curl_setopt($curl, CURLOPT_URL, $url);
@@ -29,22 +29,22 @@ function send_distract(){
 
         curl_setopt($curl, CURLOPT_HTTPHEADER, ["Content-Type: application/json"]);
         
-        curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode(["id" => intval($id)]));
+        curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode(["id" => intval($id), "vaga" => get_post_meta(intval($id), "c_vaga", true)]));
 
-        $resp = curl_exec($curl);
+        curl_exec($curl);
         curl_close($curl);
 
         $Historic->new([
-            "title" => "[distract sent] - ".$name,
-            "action" => "distract sent",
+            "title" => "[attachment contract sent] - ".$name,
+            "action" => "attachment contract sent",
             "who_received" => $name
         ]);
     } catch (\throwable $e){
         error_log(((string)$e));
 
         $Historic->new([
-            "title" => "[error][distract sent] - ".$name,
-            "action" => "distract sent",
+            "title" => "[error][attachment contract sent] - ".$name,
+            "action" => "attachment contract sent",
             "who_received" => $name
         ]);
     }

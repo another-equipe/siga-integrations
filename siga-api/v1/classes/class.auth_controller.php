@@ -1,7 +1,6 @@
 <?php
 
-define("SIGA_API_SECRET", 'hWmYq3t6w9z$C&F)J@NcRfUjXn2r4u7x');
-
+include_once __DIR__."/../../constants.php";
 class AuthController {
     public function authenticate($api_key){
         global $wpdb;

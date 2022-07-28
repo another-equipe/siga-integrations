@@ -1,7 +1,6 @@
 <?php
 
-define("DEFAULT_API_PREFIX", "siga");
-define("DEFAULT_API_VERSION", 1);
+include_once __DIR__."/../constants.php";
 
 class SIGAAPI{
     private $api_prefix;
