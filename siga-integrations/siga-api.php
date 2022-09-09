@@ -2,15 +2,15 @@
 
 /**
  * Plugin Name: SIGA Integrations
- * Version: 2.1.2
+ * Version: 2.3.0
  * Plugin URI: 
- * Description: API para integrações com o SIGA
+ * Description: Integrações com o SIGA
  * Author: Another Equipe
  * Author URI: 
  *
  * @package WordPress
  * @author Another Equipe
- * @since 2.1.2
+ * @since 2.2.4
  */
 
 include_once __DIR__."/v1/core.php";
@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-function register_sigav1_routes(){
+function register_siga_routes(){
     $SIGA_API = new SIGAAPI("siga", 1);
     
     $SIGA_API->add_route(SIGA_V1_ROUTES["get:candidates"]["route"], function($request){
@@ -149,9 +149,10 @@ function register_sigav1_routes(){
         $auth_controller = new AuthController();
         $router = new Router();
         $have_auth = $auth_controller->authenticate($request["key"]);
-
+        
         try {
             if ($have_auth){
+                ignore_user_abort(true);
                 return rest_ensure_response($router->candidate_action($request));
             }
             return ["status" => "error", "error" => "unauthorized"];
@@ -197,6 +198,37 @@ function register_sigav1_routes(){
     }, SIGA_V1_ROUTES["get:team"]["method"]);
 }
 
-add_action("rest_api_init", "register_sigav1_routes");
+function register_cron_routes(){
+    $SIGA_API = new SIGAAPI("cron", 1);
+
+    $SIGA_API->add_route("/cron/add", function($request){
+        $auth_controller = new AuthController();
+        $have_auth = $auth_controller->authenticate($request["key"]);
+        
+        try {
+            if ($have_auth){
+                $post_arr = [
+                    "post_title" => $request["value"],
+                    "post_type" => "cron_queue"
+                ];
+                
+                $post_id = wp_insert_post($post_arr);
+                
+                add_post_meta($post_id, "queue_name", $request["queue_name"]);
+                
+                return rest_ensure_response(["status" => "success"]);
+            }
+            return ["status" => "error", "error" => "unauthorized"];
+        } catch (Exception $e){
+            return ["status" => "error", "error" => $e];
+        } catch (Throwable $e){
+            return ["status" => "fatal-error", "error" => (string)$e];
+        }
+    }, "POST");
+
+}
+
+add_action("rest_api_init", "register_siga_routes");
+add_action("rest_api_init", "register_cron_routes");
 
 flush_rewrite_rules();

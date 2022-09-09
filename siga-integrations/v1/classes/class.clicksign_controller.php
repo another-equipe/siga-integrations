@@ -9,7 +9,12 @@ class ClickSign{
             "post_title" => $id,
             "post_type" => SCHEDULE_SEND_DISTRACT_SLUG
         ];
-        return wp_insert_post($post_arr) != 0;
+        
+        $post_id = wp_insert_post($post_arr);
+        
+        add_post_meta($post_id, "queue_name", SCHEDULE_SEND_DISTRACT_SLUG);
+
+        return $post_id != 0;
     }
     
     public function schedule_send_SPC_contract(int $id): bool{
@@ -18,7 +23,12 @@ class ClickSign{
             "post_title" => $id,
             "post_type" => SCHEDULE_SEND_SCP_CONTRACT_SLUG
         ];
-        return wp_insert_post($post_arr) != 0;
+        
+        $post_id = wp_insert_post($post_arr);
+        
+        add_post_meta($post_id, "queue_name", SCHEDULE_SEND_SCP_CONTRACT_SLUG);
+
+        return $post_id != 0;
     }
 
     public function schedule_send_attachment_contract(int $id): bool{
@@ -27,6 +37,11 @@ class ClickSign{
             "post_title" => $id,
             "post_type" => SCHEDULE_SEND_ATTACHMENT_CONTRACT_SLUG
         ];
-        return wp_insert_post($post_arr) != 0;
+        
+        $post_id = wp_insert_post($post_arr);
+        
+        add_post_meta($post_id, "queue_name", SCHEDULE_SEND_ATTACHMENT_CONTRACT_SLUG);
+
+        return $post_id != 0;
     }
 }
