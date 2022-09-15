@@ -202,12 +202,12 @@ class CandidateController
     public function distract_candidate(int $to_distract, int $to_assume): array
     {
         $clicksign_controller = new ClickSign();
-        $Historic = new Historic();
+        // $Historic = new Historic();
 
         $candidate_to_distract = $this->get_candidate_by_id($to_distract);
         $candidate_to_assume = $this->get_candidate_by_id($to_assume);
 
-        if ($candidate_to_distract["candidate_vaga"] != $candidate_to_assume["candidate_vaga"]) throw new Exception("candidates must be the same hierarquie");
+        // if ($candidate_to_distract["candidate_vaga"] != $candidate_to_assume["candidate_vaga"]) throw new Exception("candidates must be the same hierarquie");
 
         $this->delete_user_by_id($this->get_user_by_email($candidate_to_distract["candidate_email"]));
         update_post_meta($to_distract, "c_status", "distratado");
