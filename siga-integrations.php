@@ -2,7 +2,7 @@
 
 /**
  * Plugin Name: SIGA Integrations
- * Version: 2.3.0
+ * Version: 2.4.0
  * Plugin URI: 
  * Description: Integrações com o SIGA
  * Author: Another Equipe
@@ -10,7 +10,7 @@
  *
  * @package WordPress
  * @author Another Equipe
- * @since 2.2.4
+ * @since 2.4.0
  */
 
 include_once __DIR__."/v1/core.php";

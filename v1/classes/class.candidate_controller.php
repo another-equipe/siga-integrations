@@ -3,7 +3,6 @@
 include_once __DIR__ . "/../../constants.php";
 include_once __DIR__ . "./../../utils/sanitize_metas.php";
 include_once __DIR__ . "/class.clicksign_controller.php";
-include_once __DIR__ . "/class.historic.php";
 
 class CandidateController
 {
@@ -175,7 +174,6 @@ class CandidateController
         foreach ($team as $hierarquie) {
             foreach ($hierarquie as $member) {
                 $clicksign_controller = new ClickSign();
-                $Historic = new Historic();
 
                 $this->delete_user_by_id($this->get_user_by_email($member["candidate_email"]));
                 update_post_meta($member["id"], "c_status", "distratado");
@@ -183,16 +181,6 @@ class CandidateController
 
 
                 $member_name = get_post(intval($member["id"]))->post_title;
-/*                 $Historic->new([
-                    "title" => "[distracted] - " . $member_name,
-                    "action" => "distracted",
-                    "who_received" => $member_name
-                ]);
-                $Historic->new([
-                    "title" => "[send distract scheduled] - " . $member_name,
-                    "action" => "send distract scheduled",
-                    "who_received" => $member_name
-                ]); */
             }
         }
 
@@ -202,12 +190,11 @@ class CandidateController
     public function distract_candidate(int $to_distract, int $to_assume): array
     {
         $clicksign_controller = new ClickSign();
-        // $Historic = new Historic();
 
         $candidate_to_distract = $this->get_candidate_by_id($to_distract);
         $candidate_to_assume = $this->get_candidate_by_id($to_assume);
 
-        // if ($candidate_to_distract["candidate_vaga"] != $candidate_to_assume["candidate_vaga"]) throw new Exception("candidates must be the same hierarquie");
+        if ($candidate_to_distract["candidate_vaga"] != $candidate_to_assume["candidate_vaga"]) throw new Exception("candidates must be the same hierarquie");
 
         $this->delete_user_by_id($this->get_user_by_email($candidate_to_distract["candidate_email"]));
         update_post_meta($to_distract, "c_status", "distratado");
@@ -235,17 +222,6 @@ class CandidateController
         
         wp_insert_post($post_arr);
 
-        /* $Historic->new([
-            "title" => "[distracted] - " . $candidate_to_distract["candidate_nome"],
-            "action" => "distracted",
-            "who_received" => $candidate_to_distract["candidate_nome"]
-        ]);
-        $Historic->new([
-            "title" => "[send distract scheduled] - " . $candidate_to_distract["candidate_nome"],
-            "action" => "send distract scheduled",
-            "who_received" => $candidate_to_distract["candidate_nome"]
-        ]); */
-
         return [
             "distracted" => $candidate_to_distract,
             "assumed" => $candidate_to_assume,
@@ -257,7 +233,6 @@ class CandidateController
     public function promote_candidate(int $id, int $new_recruiter_id, string $hierarquie, ?int $to_assume)
     {
         $clicksign_controller = new ClickSign();
-        $Historic = new Historic();
 
         $allowed_hierarquies = ["diretor", "lider", "gerente", "supervisor", "consultor"];
 
@@ -266,10 +241,10 @@ class CandidateController
         $candidate_to_assume_team = $this->get_candidate_by_id($to_assume);
 
         if (!in_array($hierarquie, $allowed_hierarquies, true)) throw new Exception("Invalid hierarquie, try 'diretor', 'lider', 'gerente' or 'supervisor'");
-        if (is_null($candidate_superior["candidate_vaga"])) throw new Exception("Not able to promote without a new recruiter");
-        if ($hierarquie == $candidate["candidate_vaga"]) throw new Exception("Not able to promote to a equal hierarquie");
+        // if (is_null($candidate_superior["candidate_vaga"])) throw new Exception("Not able to promote without a new recruiter");
+        // if ($hierarquie == $candidate["candidate_vaga"]) throw new Exception("Not able to promote to a equal hierarquie");
         if (is_null($candidate)) throw new Exception("Candidate with id $id not found");
-        if ($candidate["candidate_vaga"] != "consultor" && is_null($candidate_to_assume_team)) throw new Exception("Candidate with id $id that will assume team not found");
+        // if ($candidate["candidate_vaga"] != "consultor" && is_null($candidate_to_assume_team)) throw new Exception("Candidate with id $id that will assume team not found");
 
         $this->replace_recruiter($id, $to_assume, false);
 
@@ -312,27 +287,6 @@ class CandidateController
         
         $post_id = wp_insert_post($post_arr);
 
-/*      $Historic->new([
-            "title" => "[promoted from " . $candidate["candidate_vaga"] . " to " . $hierarquie . "] - " . $candidate["candidate_nome"],
-            "action" => "promotion",
-            "who_received" => $candidate["candidate_name"]
-        ]);
-        $Historic->new([
-            "title" => "[send distract scheduled] - " . $candidate["candidate_nome"],
-            "action" => "send distract scheduled",
-            "who_received" => $candidate["candidate_name"]
-        ]);
-        $Historic->new([
-            "title" => "[send SCP contract scheduled] - " . $candidate["candidate_nome"],
-            "action" => "send SCP contract scheduled",
-            "who_received" => $candidate["candidate_name"]
-        ]);
-        $Historic->new([
-            "title" => "[send attachment contract scheduled] - " . $candidate["candidate_nome"],
-            "action" => "send attachment contract scheduled",
-            "who_received" => $candidate["candidate_nome"]
-        ]); */
-
         return [
             "old_hierarquie" => $candidate["candidate_vaga"],
             "hierarquie" => $hierarquie,
@@ -351,7 +305,6 @@ class CandidateController
 
     public function replace_recruiter(int $from, int $to): array
     {
-        $Historic = new Historic();
         $candidate_to_be_replaced = $this->get_candidate_by_id($from);
         $candidate = $this->get_candidate_by_id($to);
         $team = $this->get_team($from);
@@ -364,14 +317,6 @@ class CandidateController
                     update_post_meta($member["id"], "c_recrutador", $candidate["candidate_email"]);
                     update_post_meta($member["id"], "c_recrutador_nome", $candidate["candidate_nome"]);
                     update_post_meta($member["id"], "c_recrutador_telefone", $candidate["candidate_telefone"]);
-
-                    $Historic->new([
-                        "title" => "[recruiter transfer] - from " . $candidate_to_be_replaced["candidate_name"] . " to " . $candidate["candidate_name"],
-                        "action" => "transfer",
-                        "who_received" => get_post($member["id"])->post_title,
-                        "old_recruiter" => $candidate_to_be_replaced["candidate_name"],
-                        "recruiter" => $candidate["candidate_name"]
-                    ]);
                 }
 
                 update_post_meta($member["id"], "e_" . $candidate["candidate_vaga"] . "_nome", $candidate["candidate_nome"]);
@@ -379,12 +324,6 @@ class CandidateController
             }
             $first_hierarquie = false;
         }
-
-        $Historic->new([
-            "title" => "[team moved] - from " . $candidate_to_be_replaced["candidate_name"] . " to " . $candidate["candidate_name"],
-            "action" => "team moved",
-            "who_received" => $candidate_to_be_replaced["candidate_name"] . " and " . $candidate["candidate_name"]
-        ]);
 
         return [
             "old_moved" => $team,
